@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:udemy_project/scoped_models/main.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:udemy_project/models/auth.dart';
 
 class AuthPage extends StatefulWidget {
   @override
@@ -17,6 +18,8 @@ class _AuthPageState extends State<AuthPage> {
     'accept_terms': false
   };
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _pwTextController = TextEditingController();
+  AuthMode _authMode = AuthMode.Login;
 
   _showWarningDialog(BuildContext context) {
     showDialog(
@@ -66,10 +69,11 @@ class _AuthPageState extends State<AuthPage> {
         filled: true,
         fillColor: Colors.white70,
       ),
+      controller: _pwTextController, // accessing a widget's properties
       obscureText: true,
       validator: (String value) {
-        if (value.isEmpty || value.length < 3) {
-          return 'Password should be at least 3 characters long';
+        if (value.isEmpty || value.length < 6) {
+          return 'Password should be at least 6 characters long';
         }
       },
       onSaved: (String value) {
@@ -78,7 +82,24 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  Widget _buildListTile() {
+  Widget _buildPWConfirmText() {
+    return TextFormField(
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock_outline),
+        labelText: 'Confirm Password',
+        filled: true,
+        fillColor: Colors.white70,
+      ),
+      obscureText: true,
+      validator: (String value) {
+        if (_pwTextController.text != value) {
+          return 'Passwords do not match';
+        }
+      },
+    );
+  }
+
+  Widget _buildSwitch() {
     return SwitchListTile(
       value: _formData['accept_terms'],
       onChanged: (bool value) {
@@ -90,13 +111,34 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  void _validate(Function login) {
+  void _validate(Function authenticate) async {
     if (!_formKey.currentState.validate() || !_formData['accept_terms']) {
       return;
     }
     _formKey.currentState.save();
-    login(_formData['email'],_formData['password']);
-    Navigator.pushReplacementNamed(context, '/mainpage');
+    Map<String, dynamic> successInfo=await authenticate(_formData['email'],_formData['password'],_authMode);
+     
+    if (successInfo['success']) {
+      Navigator.pushReplacementNamed(context, '/mainpage');
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('An error Occured'),
+            content: Text(successInfo['message']),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('Okay'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                }, 
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -130,15 +172,44 @@ class _AuthPageState extends State<AuthPage> {
                       height: 20.0,
                     ),
                     _buildPWText(),
-                    SizedBox(height: 10.0),
-                    _buildListTile(),
+                    SizedBox(height: 20.0),
+                    _authMode == AuthMode.Signup
+                        ? _buildPWConfirmText()
+                        : Container(),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    _buildSwitch(),
+                    SizedBox(
+                      height: 20.0,
+                    ),
+                    FlatButton(
+                      child: Text(
+                          'Switch to ${_authMode == AuthMode.Login ? 'Signup' : 'Login'}'),
+                      onPressed: () {
+                        setState(() {
+                          _authMode = _authMode == AuthMode.Login
+                              ? AuthMode.Signup
+                              : AuthMode.Login;
+                        });
+                      },
+                    ),
+                    SizedBox(
+                      height: 20.0,
+                    ),
                     ScopedModelDescendant<MainModel>(
                       builder: (BuildContext context, Widget child,
                           MainModel model) {
-                        return RaisedButton(
-                          child: Text('Login'),
-                          onPressed: () => _validate(model.logIn),
-                        );
+                        return model.isLoading
+                            ? CircularProgressIndicator()
+                            : RaisedButton(
+                                child: Text(_authMode == AuthMode.Login
+                                    ? 'Login'
+                                    : 'Sign Up'),
+                                onPressed: () {
+                                  _validate(model.authenticate);
+                                },
+                              );
                       },
                     ),
                   ],
