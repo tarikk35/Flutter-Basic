@@ -1,10 +1,12 @@
-import 'package:scoped_model/scoped_model.dart';
-import 'package:http/http.dart' as http;
-import 'package:udemy_project/models/bird.dart';
-import 'package:udemy_project/models/user.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'package:scoped_model/scoped_model.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:udemy_project/models/bird.dart';
+import 'package:udemy_project/models/user.dart';
 import 'package:udemy_project/models/auth.dart';
+import 'package:rxdart/subjects.dart';
 
 mixin ConnectedBirdsModel on Model {
   List<Bird> _birds = []; // My main list of Birds.
@@ -57,7 +59,7 @@ mixin BirdsModel on ConnectedBirdsModel {
     try {
       final http.Response response = await http.post(
           // await = wait process to finish.
-          'https://flutter-birds.firebaseio.com/birds.json',
+          'https://flutter-birds.firebaseio.com/birds.json?auth=${_authenticatedUser.token}',
           body: json.encode(birdData));
 
       if (response.statusCode != 200 && response.statusCode != 201) {
@@ -94,7 +96,7 @@ mixin BirdsModel on ConnectedBirdsModel {
     _selectedBirdId = null;
     return http
         .delete(
-            'https://flutter-birds.firebaseio.com/birds/$deletedBirdId.json')
+            'https://flutter-birds.firebaseio.com/birds/$deletedBirdId.json?auth=${_authenticatedUser.token}')
         .then((http.Response response) {
       _isLoading = false;
       notifyListeners();
@@ -122,7 +124,7 @@ mixin BirdsModel on ConnectedBirdsModel {
     };
     return http
         .put(
-            'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}.json',
+            'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}.json?auth=${_authenticatedUser.token}',
             body: json.encode(updateData))
         .then((http.Response response) {
       final Bird updatedBird = Bird(
@@ -149,11 +151,12 @@ mixin BirdsModel on ConnectedBirdsModel {
     });
   }
 
-  Future<Null> fetchBirds() {
+  Future<Null> fetchBirds({onlyForUser=false}) {
     _isLoading = true;
     notifyListeners();
     return http
-        .get('https://flutter-birds.firebaseio.com/birds.json')
+        .get(
+            'https://flutter-birds.firebaseio.com/birds.json?auth=${_authenticatedUser.token}')
         .then<Null>((http.Response response) {
       final List<Bird> fetchedBirdList = [];
       final Map<String, dynamic> birdListData = json.decode(response.body);
@@ -164,17 +167,23 @@ mixin BirdsModel on ConnectedBirdsModel {
       }
       birdListData.forEach((String birdId, dynamic birdData) {
         final Bird bird = Bird(
-          address: birdData['address'],
-          id: birdId,
-          title: birdData['title'],
-          description: birdData['description'],
-          image: birdData['image'],
-          price: birdData['price'],
-          userId: birdData['userId'],
-          userMail: birdData['userEmail'],
-        );
+            address: birdData['address'],
+            id: birdId,
+            title: birdData['title'],
+            description: birdData['description'],
+            image: birdData['image'],
+            price: birdData['price'],
+            userId: birdData['userId'],
+            userMail: birdData['userEmail'],
+            isFavorite: birdData['favUsers'] == null
+                ? false
+                : (birdData['favUsers'] as Map<String, dynamic>)
+                    .containsKey(_authenticatedUser.id));
         fetchedBirdList.add(bird);
       });
+      _birds=onlyForUser?fetchedBirdList.where((Bird bird){
+        return bird.userId==_authenticatedUser.id;
+      }).toList():fetchedBirdList;
       _birds = fetchedBirdList;
       _isLoading = false;
       notifyListeners();
@@ -194,7 +203,7 @@ mixin BirdsModel on ConnectedBirdsModel {
           });
   }
 
-  void toggleFavorite() {
+  void toggleFavorite() async {
     final Bird selectedBird = _birds[selectedBirdIndex];
     final bool newStatus = !selectedBird.isFavorite;
     final Bird updatedBird = Bird(
@@ -210,6 +219,30 @@ mixin BirdsModel on ConnectedBirdsModel {
     _birds[selectedBirdIndex] = updatedBird;
     _selectedBirdId = null;
     notifyListeners();
+    http.Response response;
+    if (newStatus) {
+      response = await http.put(
+          'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}/favUsers/${_authenticatedUser.id}.json?auth=${_authenticatedUser.token}',
+          body: json.encode(true));
+    } else {
+      response = await http.delete(
+          'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}/favUsers/${_authenticatedUser.id}.json?auth=${_authenticatedUser.token}');
+    }
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final Bird updatedBird = Bird(
+          id: selectedBird.id,
+          address: selectedBird.address,
+          description: selectedBird.description,
+          image: selectedBird.image,
+          price: selectedBird.price,
+          title: selectedBird.title,
+          isFavorite: !newStatus,
+          userId: _authenticatedUser.id,
+          userMail: _authenticatedUser.email);
+      _birds[selectedBirdIndex] = updatedBird;
+      _selectedBirdId = null;
+      notifyListeners();
+    }
   }
 
   void selectBird(String birdId) {
@@ -230,6 +263,13 @@ mixin BirdsModel on ConnectedBirdsModel {
 }
 
 mixin UserModel on ConnectedBirdsModel {
+  Timer _authTimer;
+  PublishSubject<bool> _userSubject = PublishSubject();
+
+  PublishSubject<bool> get userSubject {
+    return _userSubject;
+  }
+
   Future<Map<String, dynamic>> authenticate(String email, String password,
       [AuthMode mode = AuthMode.Login]) async {
     _isLoading = true;
@@ -259,17 +299,72 @@ mixin UserModel on ConnectedBirdsModel {
     if (responseData.containsKey('idToken')) {
       hasError = false;
       message = 'Authentication succeeded';
+      _authenticatedUser = User(
+        id: responseData['localId'],
+        email: email,
+        token: responseData['idToken'],
+      );
+      setAuthTimeout(int.parse(responseData['expiresIn']));
+      _userSubject.add(true);
+      final DateTime now = DateTime.now();
+      final DateTime expiryTime =
+          now.add(Duration(seconds: int.parse(responseData['expiresIn'])));
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString(
+          'token', responseData['idToken']); // Storing token in device.
+      prefs.setString('userEmail', email);
+      prefs.setString('userId', responseData['localId']);
+      prefs.setString('expiryTime', expiryTime.toIso8601String());
     } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
       message = 'Account does not exist';
     } else if (responseData['error']['message'] == 'INVALID_PASSWORD') {
       message = 'Invalid password';
-    }
-    else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
+    } else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
       message = 'This email already exists';
     }
     _isLoading = false;
     notifyListeners();
     return {'success': !hasError, 'message': message};
+  }
+
+  void autoAuthenticate() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String token = prefs.getString('token');
+    final String expiryTimeString = prefs.getString('expiryTime');
+    if (token != null) {
+      final DateTime now = DateTime.now();
+      final expiryTime = DateTime.parse(expiryTimeString);
+      if (expiryTime.isBefore(now)) {
+        _authenticatedUser = null;
+        notifyListeners();
+        return;
+      }
+      final String userEmail = prefs.getString('userEmail');
+      final String userId = prefs.getString('userId');
+      final int tokenLifespan = expiryTime.difference(now).inSeconds;
+      _authenticatedUser = User(id: userId, email: userEmail, token: token);
+      _userSubject.add(true);
+      setAuthTimeout(tokenLifespan);
+      notifyListeners();
+    }
+  }
+
+  void logout() async {
+    _authenticatedUser = null;
+    _authTimer.cancel();
+    _userSubject.add(false);
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('token');
+    prefs.remove('userEmail');
+    prefs.remove('userId');
+  }
+
+  User get user {
+    return _authenticatedUser;
+  }
+
+  void setAuthTimeout(int time) {
+    _authTimer = Timer(Duration(seconds: time), logout);
   }
 }
 

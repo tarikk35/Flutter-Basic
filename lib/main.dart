@@ -24,9 +24,22 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final MainModel _model = MainModel();
+  bool _isAuthenticated=false;
+
+  @override
+  void initState() {
+    _model.autoAuthenticate();
+    _model.userSubject.listen((bool isAuthenticated){
+      setState(() {
+       _isAuthenticated=isAuthenticated; 
+      });
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final MainModel model=MainModel();
     // build method returns widget type.
     return ScopedModel<MainModel>(
       child: MaterialApp(
@@ -41,11 +54,16 @@ class _MyAppState extends State<MyApp> {
           buttonColor: Colors.amber,
         ),
         routes: {
-          '/': (BuildContext context) => AuthPage(), // '/' equals homepage.
-          '/mainpage': (BuildContext context) => BirdsPage(model),
-          '/admin': (BuildContext context) => BirdsAdminPage(model),
+          // '/' equals homepage.
+          '/': (BuildContext context) =>
+              !_isAuthenticated ? AuthPage() : BirdsPage(_model),
+          '/admin': (BuildContext context) =>!_isAuthenticated ? AuthPage() : BirdsAdminPage(_model),
         },
         onGenerateRoute: (RouteSettings settings) {
+          if(!_isAuthenticated){
+           return MaterialPageRoute<bool>(
+                builder: (BuildContext context) => AuthPage()); 
+          }
           final List<String> pathElements = settings.name.split('/');
           print(pathElements[0]);
           if (pathElements[0] != '') {
@@ -53,21 +71,21 @@ class _MyAppState extends State<MyApp> {
           }
           if (pathElements[1] == 'bird') {
             final String birdId = pathElements[2];
-            final Bird bird=model.allBirds.firstWhere((Bird b){
-              return b.id==birdId;
+            final Bird bird = _model.allBirds.firstWhere((Bird b) {
+              return b.id == birdId;
             });
             return MaterialPageRoute<bool>(
-                builder: (BuildContext context) => BirdPage(bird));
+                builder: (BuildContext context) =>!_isAuthenticated ? AuthPage() : BirdPage(bird));
           }
           return null;
         },
         onUnknownRoute: (RouteSettings settings) {
           return MaterialPageRoute(
-              builder: (BuildContext context) => BirdsPage(model));
+              builder: (BuildContext context) =>!_isAuthenticated ? AuthPage() : BirdsPage(_model));
         },
         //home: AuthPage(),
       ),
-      model: model,
+      model: _model,
     );
   }
 }

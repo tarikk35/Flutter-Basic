@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import './bird_edit.dart';
 import 'bird_list.dart';
 import 'package:udemy_project/scoped_models/main.dart';
+import 'package:udemy_project/widgets/ui_elements/logout_list_tile.dart';
 
 class BirdsAdminPage extends StatelessWidget {
   final MainModel model;
@@ -19,9 +20,11 @@ class BirdsAdminPage extends StatelessWidget {
             leading: Icon(Icons.keyboard_return),
             title: Text('Return to Homepage'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/mainpage');
+              Navigator.pushReplacementNamed(context, '/');
             },
           ),
+          Divider(),
+          LogoutListTile(),
         ],
       ),
     );

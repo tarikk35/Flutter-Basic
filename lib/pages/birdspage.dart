@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/birds/birds.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:udemy_project/scoped_models/main.dart';
+import 'package:udemy_project/widgets/ui_elements/logout_list_tile.dart';
 
 class BirdsPage extends StatefulWidget {
   final MainModel model;
@@ -35,6 +36,8 @@ class _BirdsPageState extends State<BirdsPage> {
               Navigator.pushReplacementNamed(context, '/admin');
             },
           ),
+          Divider(),
+          LogoutListTile(),
         ],
       ),
     );
