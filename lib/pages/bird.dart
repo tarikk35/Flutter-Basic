@@ -6,6 +6,7 @@ import '../widgets/ui_elements/title.dart';
 import '../widgets/birds/price_tag.dart';
 import 'package:udemy_project/scoped_models/main.dart';
 import 'package:udemy_project/models/bird.dart';
+import 'package:map_view/map_view.dart';
 
 class BirdPage extends StatelessWidget {
   final Bird bird;
@@ -43,6 +44,30 @@ class BirdPage extends StatelessWidget {
               );
             },
           );
+        });
+  }
+
+  void _showMap() {
+    final List<Marker> markers = <Marker>[
+      Marker('position', 'Position', bird.location.latitude,
+          bird.location.longitude),
+    ];
+    final camPosition = CameraPosition(
+        Location(bird.location.latitude, bird.location.longitude), 15.0);
+    final mapView = MapView();
+    mapView.show(
+        MapOptions(
+            mapViewType: MapViewType.normal,
+            title: 'Bird Location',
+            initialCameraPosition: camPosition),
+        toolbarActions: [ToolbarAction('Close', 1)]);
+        mapView.onToolbarAction.listen((int id){
+          if(id==1){
+            mapView.dismiss();
+          }
+        });
+        mapView.onMapReady.listen((_){
+          mapView.setMarkers(markers);
         });
   }
 
@@ -90,10 +115,13 @@ class BirdPage extends StatelessWidget {
                   bird.description,
                   style: TextStyle(fontSize: 20.0),
                 ),
-                Text(
-                  bird.address,
-                  style: TextStyle(fontSize: 20.0),
-                ),
+                GestureDetector(
+                  child: Text(
+                    bird.location.address,
+                    style: TextStyle(fontSize: 20.0),
+                  ),
+                  onTap: _showMap,
+                )
               ],
             ),
             SizedBox(height: 20.0),

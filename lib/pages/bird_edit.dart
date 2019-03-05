@@ -3,6 +3,8 @@ import 'package:scoped_model/scoped_model.dart';
 import '../widgets/helpers/ensure-visible.dart';
 import 'package:udemy_project/models/bird.dart';
 import 'package:udemy_project/scoped_models/main.dart';
+import 'package:udemy_project/widgets/form_inputs/location.dart';
+import 'package:udemy_project/models/location_data.dart';
 
 class BirdEditPage extends StatefulWidget {
   @override
@@ -18,7 +20,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
     'price': null,
     'image':
         'http://skybirdsales.co.uk/wp-content/uploads/2014/08/fischersmasked_white_edited_1.jpg',
-    'address': 'Turkey'
+    'location': LocationData()
   };
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final FocusNode _titleFocusNode = FocusNode();
@@ -38,7 +40,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
         _formData['description'],
         _formData['image'],
         _formData['price'],
-        _formData['address'],
+        _formData['location'],
       ).then((bool success) {
         {
           if (success) {
@@ -69,7 +71,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
         _formData['description'],
         _formData['image'],
         _formData['price'],
-        _formData['address'],
+        _formData['location'],
       ).then((_) => Navigator.pushReplacementNamed(context, '/mainpage')
           .then((_) => setSelectedBird()));
     }
@@ -151,6 +153,10 @@ class _BirdEditPageState extends State<BirdEditPage> {
     );
   }
 
+  void _setLocation(LocationData locData){
+    _formData['location']=locData;
+  }
+
   Widget _buildPageContent(BuildContext context, Bird bird) {
     final double deviceWidth = MediaQuery.of(context).size.width;
     final double targetWidth = deviceWidth > 550 ? 500 : deviceWidth * 0.95;
@@ -172,15 +178,19 @@ class _BirdEditPageState extends State<BirdEditPage> {
               SizedBox(
                 height: 10.0,
               ),
-              _saveBirdButton(),
-              GestureDetector(
-                child: Container(
-                  color: Colors.green,
-                  padding: EdgeInsets.all(10.0),
-                  child: Text('My Secret Text'),
-                ),
-                // onLongPress: _createBird,
+              LocationInput(_setLocation,bird),
+              SizedBox(
+                height: 10.0,
               ),
+              _saveBirdButton(),
+              // GestureDetector(
+              //   child: Container(
+              //     color: Colors.green,
+              //     padding: EdgeInsets.all(10.0),
+              //     child: Text('My Secret Text'),
+              //   ),
+              //   // onLongPress: _createBird,
+              // ),
             ],
           ),
         ),

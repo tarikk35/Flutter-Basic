@@ -7,6 +7,7 @@ import 'package:udemy_project/models/bird.dart';
 import 'package:udemy_project/models/user.dart';
 import 'package:udemy_project/models/auth.dart';
 import 'package:rxdart/subjects.dart';
+import 'package:udemy_project/models/location_data.dart';
 
 mixin ConnectedBirdsModel on Model {
   List<Bird> _birds = []; // My main list of Birds.
@@ -42,7 +43,7 @@ mixin BirdsModel on ConnectedBirdsModel {
   }
 
   Future<bool> addBird(String title, String description, String image,
-      double price, String address) async {
+      double price, LocationData locData) async {
     _isLoading = true;
     notifyListeners();
     // Only functions below can change main list of Birds.
@@ -52,9 +53,11 @@ mixin BirdsModel on ConnectedBirdsModel {
       'image':
           'http://skybirdsales.co.uk/wp-content/uploads/2014/08/fischersmasked_white_edited_1.jpg',
       'price': price,
-      'address': address,
       'userEmail': _authenticatedUser.email,
       'userId': _authenticatedUser.id,
+      'loc_lat': locData.latitude,
+      'loc_lng': locData.longitude,
+      'loc_address': locData.address,
     };
     try {
       final http.Response response = await http.post(
@@ -70,7 +73,7 @@ mixin BirdsModel on ConnectedBirdsModel {
       final Map<String, dynamic> responseData = json.decode(response.body);
       final Bird bird = Bird(
           id: responseData['name'],
-          address: address,
+          location: locData,
           title: title,
           description: description,
           image: image,
@@ -109,7 +112,7 @@ mixin BirdsModel on ConnectedBirdsModel {
   }
 
   Future<bool> editBird(String title, String description, String image,
-      double price, String address) {
+      double price, LocationData location) {
     _isLoading = true;
     notifyListeners();
     final Map<String, dynamic> updateData = {
@@ -118,9 +121,11 @@ mixin BirdsModel on ConnectedBirdsModel {
       'image':
           'http://skybirdsales.co.uk/wp-content/uploads/2014/08/fischersmasked_white_edited_1.jpg',
       'price': price,
-      'address': address,
       'userEmail': selectedBird.userMail,
       'userId': selectedBird.userId,
+      'loc_lat': location.latitude,
+      'loc_lng': location.longitude,
+      'loc_address': location.address,
     };
     return http
         .put(
@@ -129,7 +134,7 @@ mixin BirdsModel on ConnectedBirdsModel {
         .then((http.Response response) {
       final Bird updatedBird = Bird(
           id: selectedBird.id,
-          address: address,
+          location: location,
           title: title,
           description: description,
           image: image,
@@ -151,7 +156,7 @@ mixin BirdsModel on ConnectedBirdsModel {
     });
   }
 
-  Future<Null> fetchBirds({onlyForUser=false}) {
+  Future<Null> fetchBirds({onlyForUser = false}) {
     _isLoading = true;
     notifyListeners();
     return http
@@ -167,7 +172,7 @@ mixin BirdsModel on ConnectedBirdsModel {
       }
       birdListData.forEach((String birdId, dynamic birdData) {
         final Bird bird = Bird(
-            address: birdData['address'],
+            location: LocationData(address: birdData['loc_address'],longitude: birdData['loc_lng'],latitude: birdData['loc_lat']),
             id: birdId,
             title: birdData['title'],
             description: birdData['description'],
@@ -181,9 +186,11 @@ mixin BirdsModel on ConnectedBirdsModel {
                     .containsKey(_authenticatedUser.id));
         fetchedBirdList.add(bird);
       });
-      _birds=onlyForUser?fetchedBirdList.where((Bird bird){
-        return bird.userId==_authenticatedUser.id;
-      }).toList():fetchedBirdList;
+      _birds = onlyForUser
+          ? fetchedBirdList.where((Bird bird) {
+              return bird.userId == _authenticatedUser.id;
+            }).toList()
+          : fetchedBirdList;
       _birds = fetchedBirdList;
       _isLoading = false;
       notifyListeners();
@@ -208,7 +215,7 @@ mixin BirdsModel on ConnectedBirdsModel {
     final bool newStatus = !selectedBird.isFavorite;
     final Bird updatedBird = Bird(
         id: selectedBird.id,
-        address: selectedBird.address,
+        location: selectedBird.location,
         description: selectedBird.description,
         image: selectedBird.image,
         price: selectedBird.price,
@@ -231,7 +238,7 @@ mixin BirdsModel on ConnectedBirdsModel {
     if (response.statusCode != 200 && response.statusCode != 201) {
       final Bird updatedBird = Bird(
           id: selectedBird.id,
-          address: selectedBird.address,
+          location: selectedBird.location,
           description: selectedBird.description,
           image: selectedBird.image,
           price: selectedBird.price,

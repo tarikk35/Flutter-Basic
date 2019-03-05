@@ -41,7 +41,7 @@ class BirdCard extends StatelessWidget {
               ],
             ),
           ),
-          FramedText(bird.address),
+          FramedText(bird.location.address),
           Text(bird.userMail),
           
           ButtonBar(

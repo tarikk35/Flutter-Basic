@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 // import 'package:flutter/rendering.dart';
-
+import 'package:map_view/map_view.dart';
 import 'pages/birds_admin.dart';
 import 'pages/birdspage.dart';
 import 'pages/auth.dart';
@@ -13,6 +13,7 @@ void main() {
   // debugPaintSizeEnabled = true; // visual debugging.
 //   debugPaintBaselinesEnabled = true;
 //   debugPaintPointersEnabled = true;
+  MapView.setApiKey('AIzaSyBW7UZdXf38hmqQYyBxJIIchKbqAZ8ryfY');
   runApp(MyApp());
 } // main function runs when app loaded
 
@@ -25,14 +26,14 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final MainModel _model = MainModel();
-  bool _isAuthenticated=false;
+  bool _isAuthenticated = false;
 
   @override
   void initState() {
     _model.autoAuthenticate();
-    _model.userSubject.listen((bool isAuthenticated){
+    _model.userSubject.listen((bool isAuthenticated) {
       setState(() {
-       _isAuthenticated=isAuthenticated; 
+        _isAuthenticated = isAuthenticated;
       });
     });
     super.initState();
@@ -57,12 +58,13 @@ class _MyAppState extends State<MyApp> {
           // '/' equals homepage.
           '/': (BuildContext context) =>
               !_isAuthenticated ? AuthPage() : BirdsPage(_model),
-          '/admin': (BuildContext context) =>!_isAuthenticated ? AuthPage() : BirdsAdminPage(_model),
+          '/admin': (BuildContext context) =>
+              !_isAuthenticated ? AuthPage() : BirdsAdminPage(_model),
         },
         onGenerateRoute: (RouteSettings settings) {
-          if(!_isAuthenticated){
-           return MaterialPageRoute<bool>(
-                builder: (BuildContext context) => AuthPage()); 
+          if (!_isAuthenticated) {
+            return MaterialPageRoute<bool>(
+                builder: (BuildContext context) => AuthPage());
           }
           final List<String> pathElements = settings.name.split('/');
           print(pathElements[0]);
@@ -75,13 +77,15 @@ class _MyAppState extends State<MyApp> {
               return b.id == birdId;
             });
             return MaterialPageRoute<bool>(
-                builder: (BuildContext context) =>!_isAuthenticated ? AuthPage() : BirdPage(bird));
+                builder: (BuildContext context) =>
+                    !_isAuthenticated ? AuthPage() : BirdPage(bird));
           }
           return null;
         },
         onUnknownRoute: (RouteSettings settings) {
           return MaterialPageRoute(
-              builder: (BuildContext context) =>!_isAuthenticated ? AuthPage() : BirdsPage(_model));
+              builder: (BuildContext context) =>
+                  !_isAuthenticated ? AuthPage() : BirdsPage(_model));
         },
         //home: AuthPage(),
       ),
