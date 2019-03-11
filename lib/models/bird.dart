@@ -7,6 +7,7 @@ class Bird {
   final String description;
   final double price;
   final String image;
+  final String imagePath;
   final LocationData location;
   final bool isFavorite;
   final String userMail;
@@ -19,6 +20,7 @@ class Bird {
       @required this.price,
       @required this.location,
       this.isFavorite = false,
+      @required this.imagePath,
       @required this.userMail,
       @required this.userId});
 }

@@ -5,6 +5,8 @@ import 'package:udemy_project/models/bird.dart';
 import 'package:udemy_project/scoped_models/main.dart';
 import 'package:udemy_project/widgets/form_inputs/location.dart';
 import 'package:udemy_project/models/location_data.dart';
+import 'package:udemy_project/widgets/form_inputs/image.dart';
+import 'dart:io';
 
 class BirdEditPage extends StatefulWidget {
   @override
@@ -18,8 +20,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
     'title': null,
     'description': null,
     'price': null,
-    'image':
-        'http://skybirdsales.co.uk/wp-content/uploads/2014/08/fischersmasked_white_edited_1.jpg',
+    'image': null,
     'location': LocationData()
   };
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -30,7 +31,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
   void _submitBird(
       Function addBird, Function editBird, Function setSelectedBird,
       [int selectedBirdIndex]) {
-    if (!_formKey.currentState.validate()) {
+    if (!_formKey.currentState.validate()||(_formData['image']==null)&&selectedBirdIndex==-1) { // if image is not picked and not in edit mode
       return;
     }
     _formKey.currentState.save();
@@ -75,6 +76,10 @@ class _BirdEditPageState extends State<BirdEditPage> {
       ).then((_) => Navigator.pushReplacementNamed(context, '/mainpage')
           .then((_) => setSelectedBird()));
     }
+  }
+
+  void _setImage(File image) {
+    _formData['image']=image;
   }
 
   Widget _saveBirdButton() {
@@ -153,8 +158,8 @@ class _BirdEditPageState extends State<BirdEditPage> {
     );
   }
 
-  void _setLocation(LocationData locData){
-    _formData['location']=locData;
+  void _setLocation(LocationData locData) {
+    _formData['location'] = locData;
   }
 
   Widget _buildPageContent(BuildContext context, Bird bird) {
@@ -168,9 +173,10 @@ class _BirdEditPageState extends State<BirdEditPage> {
         margin: EdgeInsets.all(10.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
                 horizontal: (deviceWidth - targetWidth) / 2),
+                child: Column(
             children: <Widget>[
               _buildBirdNameText(bird),
               _buildBirdDescText(bird),
@@ -178,7 +184,11 @@ class _BirdEditPageState extends State<BirdEditPage> {
               SizedBox(
                 height: 10.0,
               ),
-              LocationInput(_setLocation,bird),
+              LocationInput(_setLocation, bird),
+              SizedBox(
+                height: 10.0,
+              ),
+              ImageInput(_setImage,bird),
               SizedBox(
                 height: 10.0,
               ),
@@ -192,6 +202,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
               //   // onLongPress: _createBird,
               // ),
             ],
+            ),
           ),
         ),
       ),

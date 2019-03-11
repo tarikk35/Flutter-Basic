@@ -8,6 +8,9 @@ import 'package:udemy_project/models/user.dart';
 import 'package:udemy_project/models/auth.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:udemy_project/models/location_data.dart';
+import 'dart:io';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 
 mixin ConnectedBirdsModel on Model {
   List<Bird> _birds = []; // My main list of Birds.
@@ -42,22 +45,27 @@ mixin BirdsModel on ConnectedBirdsModel {
     return _selectedBirdId;
   }
 
-  Future<bool> addBird(String title, String description, String image,
+  Future<bool> addBird(String title, String description, File image,
       double price, LocationData locData) async {
     _isLoading = true;
     notifyListeners();
+    final uploadData = await uploadImage(image);
+    if (uploadData == null) {
+      print('Upload failed');
+      return false;
+    }
     // Only functions below can change main list of Birds.
     final Map<String, dynamic> birdData = {
       'title': title,
       'description': description,
-      'image':
-          'http://skybirdsales.co.uk/wp-content/uploads/2014/08/fischersmasked_white_edited_1.jpg',
       'price': price,
       'userEmail': _authenticatedUser.email,
       'userId': _authenticatedUser.id,
       'loc_lat': locData.latitude,
       'loc_lng': locData.longitude,
       'loc_address': locData.address,
+      'imagePath': uploadData['imagePath'],
+      'imageUrl': uploadData['imageUrl'],
     };
     try {
       final http.Response response = await http.post(
@@ -76,7 +84,8 @@ mixin BirdsModel on ConnectedBirdsModel {
           location: locData,
           title: title,
           description: description,
-          image: image,
+          image: uploadData['imageUrl'],
+          imagePath: uploadData['imagePath'],
           price: price,
           userMail: _authenticatedUser.email,
           userId: _authenticatedUser.id);
@@ -89,6 +98,39 @@ mixin BirdsModel on ConnectedBirdsModel {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadImage(File image,
+      {String imagePath}) async {
+    final mimeTypeData = lookupMimeType(image.path).split('/');
+    final imageUploadRequest = http.MultipartRequest(
+        'POST',
+        Uri.parse(
+            'https://us-central1-flutter-birds.cloudfunctions.net/storeImage'));
+    final file = await http.MultipartFile.fromPath(
+      'image',
+      image.path,
+      contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
+    );
+    imageUploadRequest.files.add(file);
+    if (imagePath != null) {
+      imageUploadRequest.fields['imagePath'] = Uri.encodeComponent(imagePath);
+    }
+    imageUploadRequest.headers['Authorization'] =
+        'Bearer ${_authenticatedUser.token}';
+    try {
+      final stream_response = await imageUploadRequest.send();
+      final response = await http.Response.fromStream(stream_response);
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        print('Something went wrong ${json.decode(response.body)}');
+        return null;
+      }
+      final responseData = json.decode(response.body);
+      return responseData;
+    } catch (error) {
+      print(error);
+      return null;
     }
   }
 
@@ -111,15 +153,26 @@ mixin BirdsModel on ConnectedBirdsModel {
     });
   }
 
-  Future<bool> editBird(String title, String description, String image,
-      double price, LocationData location) {
+  Future<bool> editBird(String title, String description, File image,
+      double price, LocationData location) async {
     _isLoading = true;
     notifyListeners();
+    String imageUrl = selectedBird.image;
+    String imagePath = selectedBird.imagePath;
+    if (image != null) {
+      final uploadData = await uploadImage(image);
+      if (uploadData == null) {
+        print('Upload failed');
+        return false;
+      }
+      imageUrl=uploadData['imageUrl'];
+      imagePath=uploadData['imagePath'];
+    }
     final Map<String, dynamic> updateData = {
       'title': title,
       'description': description,
-      'image':
-          'http://skybirdsales.co.uk/wp-content/uploads/2014/08/fischersmasked_white_edited_1.jpg',
+      'imageUrl': imageUrl,
+      'imagePath': imagePath,
       'price': price,
       'userEmail': selectedBird.userMail,
       'userId': selectedBird.userId,
@@ -127,17 +180,17 @@ mixin BirdsModel on ConnectedBirdsModel {
       'loc_lng': location.longitude,
       'loc_address': location.address,
     };
-    return http
-        .put(
-            'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}.json?auth=${_authenticatedUser.token}',
-            body: json.encode(updateData))
-        .then((http.Response response) {
+    try {
+      final http.Response response = await http.put(
+          'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}.json?auth=${_authenticatedUser.token}',
+          body: json.encode(updateData));
       final Bird updatedBird = Bird(
           id: selectedBird.id,
           location: location,
           title: title,
           description: description,
-          image: image,
+          image: imageUrl,
+          imagePath: imagePath,
           price: price,
           userMail: selectedBird.userMail,
           userId: selectedBird.userId);
@@ -149,11 +202,11 @@ mixin BirdsModel on ConnectedBirdsModel {
       notifyListeners();
       _selectedBirdId = null;
       return true;
-    }).catchError((error) {
+    } catch (error) {
       _isLoading = false;
       notifyListeners();
       return false;
-    });
+    }
   }
 
   Future<Null> fetchBirds({onlyForUser = false}) {
@@ -172,11 +225,15 @@ mixin BirdsModel on ConnectedBirdsModel {
       }
       birdListData.forEach((String birdId, dynamic birdData) {
         final Bird bird = Bird(
-            location: LocationData(address: birdData['loc_address'],longitude: birdData['loc_lng'],latitude: birdData['loc_lat']),
+            location: LocationData(
+                address: birdData['loc_address'],
+                longitude: birdData['loc_lng'],
+                latitude: birdData['loc_lat']),
             id: birdId,
             title: birdData['title'],
             description: birdData['description'],
-            image: birdData['image'],
+            image: birdData['imageUrl'],
+            imagePath: birdData['imagePath'],
             price: birdData['price'],
             userId: birdData['userId'],
             userMail: birdData['userEmail'],
@@ -218,6 +275,7 @@ mixin BirdsModel on ConnectedBirdsModel {
         location: selectedBird.location,
         description: selectedBird.description,
         image: selectedBird.image,
+        imagePath: selectedBird.imagePath,
         price: selectedBird.price,
         title: selectedBird.title,
         isFavorite: newStatus,
@@ -241,6 +299,7 @@ mixin BirdsModel on ConnectedBirdsModel {
           location: selectedBird.location,
           description: selectedBird.description,
           image: selectedBird.image,
+          imagePath: selectedBird.imagePath,
           price: selectedBird.price,
           title: selectedBird.title,
           isFavorite: !newStatus,

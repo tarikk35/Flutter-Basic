@@ -31,6 +31,10 @@
     <string>User location is required to add a product's location.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Allow this app to reach your location info </string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow this app to reach your gallery</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow this app to use your camera</string>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

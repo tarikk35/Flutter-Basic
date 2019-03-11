@@ -25,6 +25,8 @@ dependencies:
   rxdart: ^0.21.0
   map_view: ^0.0.14
   location: ^1.4.0
+  image_picker: ^0.4.5
+  mime: ^0.9.6+2
 
 dev_dependencies:
   flutter_test:

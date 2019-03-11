@@ -82,6 +82,7 @@ class _LocationInputState extends State<LocationInput> {
         _addressInputController.text = _locationData.address;
         _staticMapUri = staticMapUri;
       });
+      print(_staticMapUri.toString());
     }
   }
 
@@ -138,9 +139,9 @@ class _LocationInputState extends State<LocationInput> {
         SizedBox(
           height: 10.0,
         ),
-        _staticMapUri == null
-            ? Container()
-            : Image.network(_staticMapUri.toString())
+        // _staticMapUri == null
+        //     ? Container()
+        //     : Image.network(_staticMapUri.toString()),
       ],
     );
   }
