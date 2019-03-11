@@ -13,11 +13,16 @@ class InfoButton extends StatelessWidget {
           icon: Icon(Icons.info),
           iconSize: 50.0,
           color: Colors.blue.shade300,
-          onPressed: () => Navigator.pushNamed<bool>(
-                // after pushed page pops, then works. push and pops can send data.
-                context,
-                '/bird/' + model.allBirds[index].id,
-              ),
+          onPressed: () {
+            model.selectBird(model.allBirds[index].id);
+            Navigator.pushNamed<bool>(
+              // after pushed page pops, then works. push and pops can send data.
+              context,
+              '/bird/' + model.allBirds[index].id,
+            ).then((_){
+              model.selectBird(null);
+            });
+          },
         );
       },
     );

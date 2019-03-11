@@ -282,7 +282,7 @@ mixin BirdsModel on ConnectedBirdsModel {
         userId: _authenticatedUser.id,
         userMail: _authenticatedUser.email);
     _birds[selectedBirdIndex] = updatedBird;
-    _selectedBirdId = null;
+    // _selectedBirdId = null;
     notifyListeners();
     http.Response response;
     if (newStatus) {
@@ -306,7 +306,7 @@ mixin BirdsModel on ConnectedBirdsModel {
           userId: _authenticatedUser.id,
           userMail: _authenticatedUser.email);
       _birds[selectedBirdIndex] = updatedBird;
-      _selectedBirdId = null;
+      // _selectedBirdId = null;
       notifyListeners();
     }
   }

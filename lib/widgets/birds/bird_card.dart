@@ -18,12 +18,17 @@ class BirdCard extends StatelessWidget {
       // card widget takes all width.
       child: Column(
         children: <Widget>[
-          FadeInImage( // image placeholder while data is downloading.
-            image: NetworkImage(bird.image),
-            height: 300.0,
-            fit: BoxFit.cover, // doesnt destroy image. uses a part of image.
-            fadeInCurve: Curves.fastOutSlowIn, // fade animation when new image is loaded.
-            placeholder: AssetImage('assets/bgbird.jpg'),
+          Hero(tag: bird.id,
+          
+            child: FadeInImage(
+              // image placeholder while data is downloading.
+              image: NetworkImage(bird.image),
+              height: 300.0,
+              fit: BoxFit.cover, // doesnt destroy image. uses a part of image.
+              fadeInCurve: Curves
+                  .fastOutSlowIn, // fade animation when new image is loaded.
+              placeholder: AssetImage('assets/bgbird.jpg'),
+            ),
           ),
           Padding(
             // SizedBox or Padding or Container
@@ -42,8 +47,6 @@ class BirdCard extends StatelessWidget {
             ),
           ),
           FramedText(bird.location.address),
-          Text(bird.userMail),
-          
           ButtonBar(
             alignment: MainAxisAlignment.center,
             children: <Widget>[

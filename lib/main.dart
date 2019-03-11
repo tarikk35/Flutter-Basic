@@ -8,6 +8,7 @@ import 'pages/auth.dart';
 import 'pages/bird.dart';
 import 'package:udemy_project/scoped_models/main.dart';
 import 'models/bird.dart';
+import 'package:udemy_project/widgets/helpers/custom_route.dart';
 
 void main() {
   // debugPaintSizeEnabled = true; // visual debugging.
@@ -76,7 +77,7 @@ class _MyAppState extends State<MyApp> {
             final Bird bird = _model.allBirds.firstWhere((Bird b) {
               return b.id == birdId;
             });
-            return MaterialPageRoute<bool>(
+            return CustomRoute<bool>(
                 builder: (BuildContext context) =>
                     !_isAuthenticated ? AuthPage() : BirdPage(bird));
           }

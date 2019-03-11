@@ -7,6 +7,7 @@ import '../widgets/birds/price_tag.dart';
 import 'package:udemy_project/scoped_models/main.dart';
 import 'package:udemy_project/models/bird.dart';
 import 'package:map_view/map_view.dart';
+import 'package:udemy_project/widgets/birds/bird_fab.dart';
 
 class BirdPage extends StatelessWidget {
   final Bird bird;
@@ -61,14 +62,14 @@ class BirdPage extends StatelessWidget {
             title: 'Bird Location',
             initialCameraPosition: camPosition),
         toolbarActions: [ToolbarAction('Close', 1)]);
-        mapView.onToolbarAction.listen((int id){
-          if(id==1){
-            mapView.dismiss();
-          }
-        });
-        mapView.onMapReady.listen((_){
-          mapView.setMarkers(markers);
-        });
+    mapView.onToolbarAction.listen((int id) {
+      if (id == 1) {
+        mapView.dismiss();
+      }
+    });
+    mapView.onMapReady.listen((_) {
+      mapView.setMarkers(markers);
+    });
   }
 
   @override
@@ -80,63 +81,77 @@ class BirdPage extends StatelessWidget {
         return Future.value(false); // only execute custom pop.
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(bird.title),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            FadeInImage(
-              // image placeholder while data is downloading.
-              image: NetworkImage(bird.image),
-              height: 300.0,
-              fit: BoxFit.cover, // doesnt destroy image. uses a part of image.
-              fadeInCurve: Curves
-                  .fastOutSlowIn, // fade animation when new image is loaded.
-              placeholder: AssetImage('assets/bgbird.jpg'),
+        // appBar: AppBar(
+        //   title: Text(bird.title),
+        // ),
+        body: CustomScrollView(slivers: <Widget>[
+          SliverAppBar(
+            expandedHeight: 256.0,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(bird.title),
+              background: Hero(
+                tag: bird.id,
+                child: FadeInImage(
+                  // image placeholder while data is downloading.
+                  image: NetworkImage(bird.image),
+                  height: 300.0,
+                  fit: BoxFit
+                      .cover, // doesnt destroy image. uses a part of image.
+                  fadeInCurve: Curves
+                      .fastOutSlowIn, // fade animation when new image is loaded.
+                  placeholder: AssetImage('assets/bgbird.jpg'),
+                ),
+              ),
             ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                TitleDefault(bird.title),
-                PriceTag(bird.price.toString()),
-              ],
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                SizedBox(
+                  height: 20.0,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    TitleDefault(bird.title),
+                    PriceTag(bird.price.toString()),
+                  ],
+                ),
+                SizedBox(
+                  height: 20.0,
+                ),
                 Text(
                   bird.description,
                   style: TextStyle(fontSize: 20.0),
                 ),
                 GestureDetector(
-                  child: Text(
-                    bird.location.address,
-                    style: TextStyle(fontSize: 20.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 20.0, left: 20.0),
+                    alignment: FractionalOffset.center,
+                    child: Row(
+                      children: <Widget>[
+                        Text(
+                          bird.location.address,
+                          style: TextStyle(fontSize: 30.0),
+                        ),
+                        Icon(Icons.location_on),
+                      ],
+                    ),
                   ),
                   onTap: _showMap,
-                )
-              ],
-            ),
-            SizedBox(height: 20.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
+                ),
                 IconButton(
                     color: Theme.of(context).primaryColor,
                     icon: Icon(Icons.delete),
                     iconSize: 60.0,
-                    onPressed: () => _showWarningDialog(context))
+                    onPressed: () => _showWarningDialog(context)),
               ],
             ),
-          ],
-        ),
+          ),
+        ]),
+        floatingActionButton: BirdFab(
+            bird), // floatingActionButton's basic location is bottom right.
       ),
     );
   }

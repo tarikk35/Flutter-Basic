@@ -27,6 +27,7 @@ dependencies:
   location: ^1.4.0
   image_picker: ^0.4.5
   mime: ^0.9.6+2
+  url_launcher: ^5.0.1
 
 dev_dependencies:
   flutter_test:
