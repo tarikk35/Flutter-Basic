@@ -11,11 +11,13 @@ import 'models/bird.dart';
 import 'package:udemy_project/widgets/helpers/custom_route.dart';
 import 'shared/global_config.dart';
 import 'package:udemy_project/shared/adaptive_theme.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
 
 void main() {
   // debugPaintSizeEnabled = true; // visual debugging.
-//   debugPaintBaselinesEnabled = true;
-//   debugPaintPointersEnabled = true;
+  // debugPaintBaselinesEnabled = true;
+  // debugPaintPointersEnabled = true;
   MapView.setApiKey(apiKey);
   runApp(MyApp());
 } // main function runs when app loaded
@@ -30,6 +32,19 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final MainModel _model = MainModel();
   bool _isAuthenticated = false;
+  final _platformChannel = MethodChannel('flutter-birds.com/battery');
+
+  Future<Null> _getBatteryLevel() async{
+    String batteryLevel;
+    try{
+    final int result = await _platformChannel.invokeMethod('getBatteryLevel');
+    batteryLevel = 'Battery level is $result';
+    }catch(error){
+      batteryLevel='Failed to get battery level';
+      print(error);
+    }
+    print(batteryLevel);
+  }
 
   @override
   void initState() {
@@ -39,6 +54,7 @@ class _MyAppState extends State<MyApp> {
         _isAuthenticated = isAuthenticated;
       });
     });
+    _getBatteryLevel();
     super.initState();
   }
 
@@ -47,6 +63,7 @@ class _MyAppState extends State<MyApp> {
     // build method returns widget type.
     return ScopedModel<MainModel>(
       child: MaterialApp(
+        title: 'Birb',
         // debugShowMaterialGrid: true,
         debugShowCheckedModeBanner: false,
         theme: getAdaptiveTheme(context), // special theme for platforms

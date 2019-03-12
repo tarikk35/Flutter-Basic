@@ -43,7 +43,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
         _formData['title'],
         _formData['description'],
         _formData['image'],
-        double.parse(['price'].toString().replaceFirst(RegExp(r','), '.')),
+        double.parse(_formData['price'].toString().replaceFirst(RegExp(r','), '.')),
         _formData['location'],
       ).then((bool success) {
         {
@@ -74,7 +74,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
         _formData['title'],
         _formData['description'],
         _formData['image'],
-        double.parse(['price'].toString().replaceFirst(RegExp(r','), '.')),
+        double.parse(_formData['price'].toString().replaceFirst(RegExp(r','), '.')),
         _formData['location'],
       ).then((_) => Navigator.pushReplacementNamed(context, '/mainpage')
           .then((_) => setSelectedBird()));
@@ -157,7 +157,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
           decoration: InputDecoration(labelText: 'Bird Price (\$)'),
           keyboardType: TextInputType.number,
           onSaved: (String value) {
-            _formData['price'] = double.parse(value);
+            _formData['price'] = value;
           }),
     );
   }
