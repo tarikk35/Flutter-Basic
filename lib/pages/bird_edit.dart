@@ -7,6 +7,7 @@ import 'package:udemy_project/widgets/form_inputs/location.dart';
 import 'package:udemy_project/models/location_data.dart';
 import 'package:udemy_project/widgets/form_inputs/image.dart';
 import 'dart:io';
+import 'package:udemy_project/widgets/ui_elements/adaptive_progress_indicator.dart';
 
 class BirdEditPage extends StatefulWidget {
   @override
@@ -31,7 +32,9 @@ class _BirdEditPageState extends State<BirdEditPage> {
   void _submitBird(
       Function addBird, Function editBird, Function setSelectedBird,
       [int selectedBirdIndex]) {
-    if (!_formKey.currentState.validate()||(_formData['image']==null)&&selectedBirdIndex==-1) { // if image is not picked and not in edit mode
+    if (!_formKey.currentState.validate() ||
+        (_formData['image'] == null) && selectedBirdIndex == -1) {
+      // if image is not picked and not in edit mode
       return;
     }
     _formKey.currentState.save();
@@ -40,7 +43,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
         _formData['title'],
         _formData['description'],
         _formData['image'],
-        _formData['price'],
+        double.parse(['price'].toString().replaceFirst(RegExp(r','), '.')),
         _formData['location'],
       ).then((bool success) {
         {
@@ -71,7 +74,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
         _formData['title'],
         _formData['description'],
         _formData['image'],
-        _formData['price'],
+        double.parse(['price'].toString().replaceFirst(RegExp(r','), '.')),
         _formData['location'],
       ).then((_) => Navigator.pushReplacementNamed(context, '/mainpage')
           .then((_) => setSelectedBird()));
@@ -79,14 +82,15 @@ class _BirdEditPageState extends State<BirdEditPage> {
   }
 
   void _setImage(File image) {
-    _formData['image']=image;
+    _formData['image'] = image;
   }
 
   Widget _saveBirdButton() {
     return ScopedModelDescendant<MainModel>(
         builder: (BuildContext context, Widget child, MainModel model) {
       return model.isLoading
-          ? CircularProgressIndicator()
+          ? Center(
+              child: AdaptiveProgressIndicator()) 
           : IconButton(
               icon: Icon(Icons.save),
               iconSize: 80.0,
@@ -146,7 +150,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
           initialValue: bird == null ? '' : bird.price.toString(),
           validator: (String value) {
             if (value.isEmpty ||
-                !RegExp(r'^(?:[1-9]\d*|0)?(?:\.\d+)?$').hasMatch(value)) {
+                !RegExp(r'^(?:[1-9]\d*|0)?(?:[.,]\d+)?$').hasMatch(value)) {
               return 'Invalid price';
             }
           },
@@ -176,32 +180,32 @@ class _BirdEditPageState extends State<BirdEditPage> {
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
                 horizontal: (deviceWidth - targetWidth) / 2),
-                child: Column(
-            children: <Widget>[
-              _buildBirdNameText(bird),
-              _buildBirdDescText(bird),
-              _buildBirdPriceText(bird),
-              SizedBox(
-                height: 10.0,
-              ),
-              LocationInput(_setLocation, bird),
-              SizedBox(
-                height: 10.0,
-              ),
-              ImageInput(_setImage,bird),
-              SizedBox(
-                height: 10.0,
-              ),
-              _saveBirdButton(),
-              // GestureDetector(
-              //   child: Container(
-              //     color: Colors.green,
-              //     padding: EdgeInsets.all(10.0),
-              //     child: Text('My Secret Text'),
-              //   ),
-              //   // onLongPress: _createBird,
-              // ),
-            ],
+            child: Column(
+              children: <Widget>[
+                _buildBirdNameText(bird),
+                _buildBirdDescText(bird),
+                _buildBirdPriceText(bird),
+                SizedBox(
+                  height: 10.0,
+                ),
+                LocationInput(_setLocation, bird),
+                SizedBox(
+                  height: 10.0,
+                ),
+                ImageInput(_setImage, bird),
+                SizedBox(
+                  height: 10.0,
+                ),
+                _saveBirdButton(),
+                // GestureDetector(
+                //   child: Container(
+                //     color: Colors.green,
+                //     padding: EdgeInsets.all(10.0),
+                //     child: Text('My Secret Text'),
+                //   ),
+                //   // onLongPress: _createBird,
+                // ),
+              ],
             ),
           ),
         ),
@@ -218,6 +222,7 @@ class _BirdEditPageState extends State<BirdEditPage> {
           ? pageContent
           : Scaffold(
               appBar: AppBar(
+                elevation: 0.0,
                 title: Text('Edit Birds'),
               ),
               body: pageContent,

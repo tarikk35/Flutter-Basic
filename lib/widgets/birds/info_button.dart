@@ -3,8 +3,8 @@ import 'package:udemy_project/scoped_models/main.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class InfoButton extends StatelessWidget {
-  final int index;
-  InfoButton(this.index);
+  final String birdId;
+  InfoButton(this.birdId);
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant(
@@ -14,11 +14,11 @@ class InfoButton extends StatelessWidget {
           iconSize: 50.0,
           color: Colors.blue.shade300,
           onPressed: () {
-            model.selectBird(model.allBirds[index].id);
+            model.selectBird(birdId);
             Navigator.pushNamed<bool>(
               // after pushed page pops, then works. push and pops can send data.
               context,
-              '/bird/' + model.allBirds[index].id,
+              '/bird/' + birdId,
             ).then((_){
               model.selectBird(null);
             });

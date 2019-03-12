@@ -86,6 +86,7 @@ class BirdPage extends StatelessWidget {
         // ),
         body: CustomScrollView(slivers: <Widget>[
           SliverAppBar(
+            elevation: 0.0,
             expandedHeight: 256.0,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(

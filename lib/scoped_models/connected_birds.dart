@@ -120,8 +120,8 @@ mixin BirdsModel on ConnectedBirdsModel {
     imageUploadRequest.headers['Authorization'] =
         'Bearer ${_authenticatedUser.token}';
     try {
-      final stream_response = await imageUploadRequest.send();
-      final response = await http.Response.fromStream(stream_response);
+      final streamResponse = await imageUploadRequest.send();
+      final response = await http.Response.fromStream(streamResponse);
       if (response.statusCode != 200 && response.statusCode != 201) {
         print('Something went wrong ${json.decode(response.body)}');
         return null;
@@ -165,8 +165,8 @@ mixin BirdsModel on ConnectedBirdsModel {
         print('Upload failed');
         return false;
       }
-      imageUrl=uploadData['imageUrl'];
-      imagePath=uploadData['imagePath'];
+      imageUrl = uploadData['imageUrl'];
+      imagePath = uploadData['imagePath'];
     }
     final Map<String, dynamic> updateData = {
       'title': title,
@@ -181,7 +181,7 @@ mixin BirdsModel on ConnectedBirdsModel {
       'loc_address': location.address,
     };
     try {
-      final http.Response response = await http.put(
+      await http.put(
           'https://flutter-birds.firebaseio.com/birds/${selectedBird.id}.json?auth=${_authenticatedUser.token}',
           body: json.encode(updateData));
       final Bird updatedBird = Bird(
@@ -209,8 +209,11 @@ mixin BirdsModel on ConnectedBirdsModel {
     }
   }
 
-  Future<Null> fetchBirds({onlyForUser = false}) {
+  Future<Null> fetchBirds({onlyForUser = false,clearExisting=false}) {
     _isLoading = true;
+    if(clearExisting){
+      _birds=[];
+    }
     notifyListeners();
     return http
         .get(
@@ -267,21 +270,23 @@ mixin BirdsModel on ConnectedBirdsModel {
           });
   }
 
-  void toggleFavorite() async {
-    final Bird selectedBird = _birds[selectedBirdIndex];
-    final bool newStatus = !selectedBird.isFavorite;
+  void toggleFavorite(Bird toggledBird) async {
+    final bool newStatus = !toggledBird.isFavorite;
+    final int toggledBirdIndex = _birds.indexWhere((Bird bird) {
+      return bird.id == toggledBird.id;
+    });
     final Bird updatedBird = Bird(
-        id: selectedBird.id,
-        location: selectedBird.location,
-        description: selectedBird.description,
-        image: selectedBird.image,
-        imagePath: selectedBird.imagePath,
-        price: selectedBird.price,
-        title: selectedBird.title,
+        id: toggledBird.id,
+        location: toggledBird.location,
+        description: toggledBird.description,
+        image: toggledBird.image,
+        imagePath: toggledBird.imagePath,
+        price: toggledBird.price,
+        title: toggledBird.title,
         isFavorite: newStatus,
-        userId: _authenticatedUser.id,
-        userMail: _authenticatedUser.email);
-    _birds[selectedBirdIndex] = updatedBird;
+        userId: toggledBird.userId,
+        userMail: toggledBird.userMail);
+    _birds[toggledBirdIndex] = updatedBird;
     // _selectedBirdId = null;
     notifyListeners();
     http.Response response;
@@ -295,20 +300,20 @@ mixin BirdsModel on ConnectedBirdsModel {
     }
     if (response.statusCode != 200 && response.statusCode != 201) {
       final Bird updatedBird = Bird(
-          id: selectedBird.id,
-          location: selectedBird.location,
-          description: selectedBird.description,
-          image: selectedBird.image,
-          imagePath: selectedBird.imagePath,
-          price: selectedBird.price,
-          title: selectedBird.title,
+          id: toggledBird.id,
+          location: toggledBird.location,
+          description: toggledBird.description,
+          image: toggledBird.image,
+          imagePath: toggledBird.imagePath,
+          price: toggledBird.price,
+          title: toggledBird.title,
           isFavorite: !newStatus,
-          userId: _authenticatedUser.id,
-          userMail: _authenticatedUser.email);
-      _birds[selectedBirdIndex] = updatedBird;
-      // _selectedBirdId = null;
+          userId: toggledBird.userId,
+          userMail: toggledBird.userMail);
+      _birds[toggledBirdIndex] = updatedBird;
       notifyListeners();
     }
+    // _selectedBirdId = null;
   }
 
   void selectBird(String birdId) {
@@ -419,6 +424,7 @@ mixin UserModel on ConnectedBirdsModel {
     _authenticatedUser = null;
     _authTimer.cancel();
     _userSubject.add(false);
+    _selectedBirdId = null;
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove('token');
     prefs.remove('userEmail');

@@ -18,8 +18,8 @@ class BirdCard extends StatelessWidget {
       // card widget takes all width.
       child: Column(
         children: <Widget>[
-          Hero(tag: bird.id,
-          
+          Hero(
+            tag: bird.id,
             child: FadeInImage(
               // image placeholder while data is downloading.
               image: NetworkImage(bird.image),
@@ -38,20 +38,27 @@ class BirdCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                TitleDefault(bird.title),
+                Flexible(
+                  child: TitleDefault(bird.title),
+                ),
                 SizedBox(
                   width: 20.0,
                 ),
-                PriceTag(bird.price.toString()),
+                Flexible(
+                  child: PriceTag(bird.price.toString()),
+                ),
               ],
             ),
+          ),
+          SizedBox(
+            height: 10.0,
           ),
           FramedText(bird.location.address),
           ButtonBar(
             alignment: MainAxisAlignment.center,
             children: <Widget>[
-              InfoButton(birdIndex),
-              FavButton(birdIndex),
+              InfoButton(bird.id),
+              FavButton(bird),
             ],
           )
         ],

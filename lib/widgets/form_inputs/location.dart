@@ -7,6 +7,7 @@ import 'package:udemy_project/widgets/helpers/ensure-visible.dart';
 import 'package:udemy_project/models/location_data.dart';
 import 'package:udemy_project/models/bird.dart';
 import 'package:location/location.dart' as geoloc;
+import 'package:udemy_project/shared/global_config.dart';
 
 class LocationInput extends StatefulWidget {
   final Function setLocation;
@@ -21,7 +22,7 @@ class LocationInput extends StatefulWidget {
 class _LocationInputState extends State<LocationInput> {
   Uri _staticMapUri;
   final FocusNode _addressInputFocusNode = FocusNode();
-  LocationData _locationData=LocationData();
+  LocationData _locationData = LocationData();
   final TextEditingController _addressInputController = TextEditingController();
 
   @override
@@ -50,7 +51,7 @@ class _LocationInputState extends State<LocationInput> {
     }
     if (geoCode) {
       final http.Response response = await http.get(
-          'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=AIzaSyBW7UZdXf38hmqQYyBxJIIchKbqAZ8ryfY');
+          'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKey');
       final decodedResponse = json.decode(response.body);
       final formattedAddress =
           decodedResponse['results'][0]['formatted_address'];
@@ -66,9 +67,10 @@ class _LocationInputState extends State<LocationInput> {
       _locationData =
           LocationData(address: address, latitude: lat, longitude: lng);
     }
-    if (mounted) { // prevents the error when the widget is not alive but still tries to call a method.
+    if (mounted) {
+      // prevents the error when the widget is not alive but still tries to call a method.
       final StaticMapProvider staticMapViewProvider =
-          StaticMapProvider('AIzaSyBW7UZdXf38hmqQYyBxJIIchKbqAZ8ryfY');
+          StaticMapProvider(apiKey);
       final Uri staticMapUri = staticMapViewProvider.getStaticUriWithMarkers([
         Marker('position', 'Position', _locationData.latitude,
             _locationData.longitude)
@@ -88,7 +90,7 @@ class _LocationInputState extends State<LocationInput> {
 
   Future<String> _getAddress(double lat, double lng) async {
     final http.Response response = await http.get(
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat.toString()},${lng.toString()}&key=AIzaSyBW7UZdXf38hmqQYyBxJIIchKbqAZ8ryfY');
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat.toString()},${lng.toString()}&key=$apiKey');
     final decodedResponse = json.decode(response.body);
     final formattedAddress = decodedResponse['results'][0]['formatted_address'];
     return formattedAddress;
@@ -102,13 +104,32 @@ class _LocationInputState extends State<LocationInput> {
 
   void _getUserLocation() async {
     final geoloc.Location location = geoloc.Location();
-    final currentLocation = await location.getLocation();
-    final address = await _getAddress(
-        currentLocation['latitude'], currentLocation['longitude']);
-    getStaticMap(address,
-        geoCode: false,
-        lat: currentLocation['latitude'],
-        lng: currentLocation['longitude']);
+    try {
+      final currentLocation = await location.getLocation();
+      final address = await _getAddress(
+          currentLocation['latitude'], currentLocation['longitude']);
+      getStaticMap(address,
+          geoCode: false,
+          lat: currentLocation['latitude'],
+          lng: currentLocation['longitude']);
+    } catch (error) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Could not fetch location'),
+              content: Text('Please type address manually'),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Okay'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                )
+              ],
+            );
+          });
+    }
   }
 
   @override

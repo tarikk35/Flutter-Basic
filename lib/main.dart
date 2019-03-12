@@ -9,12 +9,14 @@ import 'pages/bird.dart';
 import 'package:udemy_project/scoped_models/main.dart';
 import 'models/bird.dart';
 import 'package:udemy_project/widgets/helpers/custom_route.dart';
+import 'shared/global_config.dart';
+import 'package:udemy_project/shared/adaptive_theme.dart';
 
 void main() {
   // debugPaintSizeEnabled = true; // visual debugging.
 //   debugPaintBaselinesEnabled = true;
 //   debugPaintPointersEnabled = true;
-  MapView.setApiKey('AIzaSyBW7UZdXf38hmqQYyBxJIIchKbqAZ8ryfY');
+  MapView.setApiKey(apiKey);
   runApp(MyApp());
 } // main function runs when app loaded
 
@@ -47,14 +49,7 @@ class _MyAppState extends State<MyApp> {
       child: MaterialApp(
         // debugShowMaterialGrid: true,
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.light,
-          fontFamily: 'Caviar',
-          primarySwatch: Colors.blueGrey,
-          accentColor: Colors.deepOrange,
-          backgroundColor: Colors.black,
-          buttonColor: Colors.amber,
-        ),
+        theme: getAdaptiveTheme(context), // special theme for platforms
         routes: {
           // '/' equals homepage.
           '/': (BuildContext context) =>

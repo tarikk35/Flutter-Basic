@@ -71,7 +71,7 @@ class _BirdFabState extends State<BirdFab> with TickerProviderStateMixin {
                   heroTag: 'favorite',
                   mini: true,
                   onPressed: () {
-                    model.toggleFavorite();
+                    model.toggleFavorite(model.selectedBird);
                   },
                   child: Icon(
                     model.selectedBird.isFavorite

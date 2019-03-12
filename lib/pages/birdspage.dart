@@ -4,6 +4,7 @@ import '../widgets/birds/birds.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:udemy_project/scoped_models/main.dart';
 import 'package:udemy_project/widgets/ui_elements/logout_list_tile.dart';
+import 'package:udemy_project/widgets/ui_elements/adaptive_progress_indicator.dart';
 
 class BirdsPage extends StatefulWidget {
   final MainModel model;
@@ -26,6 +27,7 @@ class _BirdsPageState extends State<BirdsPage> {
       child: Column(
         children: <Widget>[
           AppBar(
+            elevation: 0.0,
             automaticallyImplyLeading: false,
             title: Text('Choose'),
           ),
@@ -53,7 +55,7 @@ class _BirdsPageState extends State<BirdsPage> {
           content = Birds();
         } else if (model.isLoading) {
           content = Center(
-            child: CircularProgressIndicator(),
+            child: AdaptiveProgressIndicator(),
           );
         }
         return RefreshIndicator(
@@ -69,6 +71,7 @@ class _BirdsPageState extends State<BirdsPage> {
     return Scaffold(
       drawer: _buildSideDrawer(context),
       appBar: AppBar(
+        elevation: 0.0,
         title: Text('Birb List'),
         actions: <Widget>[
           ScopedModelDescendant<MainModel>(

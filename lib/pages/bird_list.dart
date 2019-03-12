@@ -16,7 +16,7 @@ class BirdListPage extends StatefulWidget {
 class _BirdListPageState extends State<BirdListPage> {
   @override
   initState() {
-    widget.model.fetchBirds();
+    widget.model.fetchBirds(onlyForUser: true,clearExisting: true);
     super.initState();
   }
 
@@ -78,7 +78,7 @@ class _BirdListPageState extends State<BirdListPage> {
               ),
             );
           },
-          itemCount: model.displayedBirds.length,
+          itemCount: model.allBirds.length,
         );
       },
     );

@@ -4,6 +4,8 @@ import 'package:udemy_project/scoped_models/main.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:udemy_project/models/auth.dart';
 
+import 'package:udemy_project/widgets/ui_elements/adaptive_progress_indicator.dart';
+
 class AuthPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -32,24 +34,6 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
           parent: _animationController, curve: Curves.fastOutSlowIn),
     );
     super.initState();
-  }
-
-  _showWarningDialog(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Incorrect Email/PW !'),
-            actions: <Widget>[
-              FlatButton(
-                child: Text('Okay'),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          );
-        });
   }
 
   Widget _buildIDText() {
@@ -170,6 +154,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     final targetWidth = deviceWidth > 550.0 ? 500.0 : deviceWidth * 0.9;
     return Scaffold(
       appBar: AppBar(
+        elevation: 0.0,
         title: Text('Login'),
       ),
       body: Container(
@@ -228,7 +213,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                       builder: (BuildContext context, Widget child,
                           MainModel model) {
                         return model.isLoading
-                            ? CircularProgressIndicator()
+                            ? AdaptiveProgressIndicator()
                             : RaisedButton(
                                 child: Text(_authMode == AuthMode.Login
                                     ? 'Login'

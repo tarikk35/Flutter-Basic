@@ -13,6 +13,7 @@ class BirdsAdminPage extends StatelessWidget {
       child: Column(
         children: <Widget>[
           AppBar(
+            elevation: 0.0,
             automaticallyImplyLeading: false,
             title: Text('Admin CCC'),
           ),
@@ -38,6 +39,7 @@ class BirdsAdminPage extends StatelessWidget {
         drawer: _buildAdminDrawer(context),
         appBar: AppBar(
           title: Text('Manage Birds'),
+          elevation: 0.0,
           bottom: TabBar(
             tabs: <Widget>[
               Tab(
